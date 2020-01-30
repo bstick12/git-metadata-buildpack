@@ -2,17 +2,19 @@ package main_test
 
 import (
 	"errors"
-	"github.com/bstick12/git-metadata-buildpack/internal"
-	"github.com/bstick12/git-metadata-buildpack/metadata"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/bstick12/git-metadata-buildpack/internal"
+	"github.com/bstick12/git-metadata-buildpack/metadata"
+
 	"github.com/buildpack/libbuildpack/buildplan"
 
 	"fmt"
+
 	cmdDetect "github.com/bstick12/git-metadata-buildpack/cmd/detect"
 	"github.com/bstick12/git-metadata-buildpack/utils"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
@@ -111,15 +113,22 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			code, err := cmdDetect.RunDetect(factory.Detect)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(code).To(Equal(detect.PassStatusCode))
-			Expect(factory.Output).To(Equal(buildplan.BuildPlan{
-				metadata.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{
-						"build":  false,
-						"launch": true,
-						"sha": "7aa636e253c4115df34b1f2fab526739cbf27570",
-						"branch": "origin/master",
-						"remote": "git@github.com/example/example.git",
+			Expect(factory.Plans.Plan).To(Equal(buildplan.Plan{
+				Requires: []buildplan.Required{
+					{
+						Name:    metadata.Dependency,
+						Version: "",
+						Metadata: buildplan.Metadata{
+							"build":  false,
+							"launch": true,
+							"sha":    "7aa636e253c4115df34b1f2fab526739cbf27570",
+							"branch": "origin/master",
+							"remote": "git@github.com/example/example.git",
+						},
 					},
+				},
+				Provides: []buildplan.Provided{
+					{metadata.Dependency},
 				},
 			}))
 		})
@@ -135,15 +144,22 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			code, err := cmdDetect.RunDetect(factory.Detect)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(code).To(Equal(detect.PassStatusCode))
-			Expect(factory.Output).To(Equal(buildplan.BuildPlan{
-				metadata.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{
-						"build":  false,
-						"launch": true,
-						"sha": "7aa636e253c4115df34b1f2fab526739cbf27570",
-						"branch": "origin/DETACHED",
-						"remote": "git@github.com/example/example.git",
+			Expect(factory.Plans.Plan).To(Equal(buildplan.Plan{
+				Requires: []buildplan.Required{
+					{
+						Name:    metadata.Dependency,
+						Version: "",
+						Metadata: buildplan.Metadata{
+							"build":  false,
+							"launch": true,
+							"sha":    "7aa636e253c4115df34b1f2fab526739cbf27570",
+							"branch": "origin/DETACHED",
+							"remote": "git@github.com/example/example.git",
+						},
 					},
+				},
+				Provides: []buildplan.Provided{
+					{metadata.Dependency},
 				},
 			}))
 		})

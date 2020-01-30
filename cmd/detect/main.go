@@ -3,29 +3,23 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/bstick12/git-metadata-buildpack/internal"
 	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/bstick12/git-metadata-buildpack/internal"
+
 	"github.com/bstick12/git-metadata-buildpack/metadata"
 
 	"github.com/buildpack/libbuildpack/buildplan"
-
 	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/logger"
-
 )
 
 func main() {
 	context, err := detect.DefaultDetect()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create a default detection context: %s", err)
-		os.Exit(detect.FailStatusCode)
-	}
-
-	if err := context.BuildPlan.Init(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize Build Plan: %s\n", err)
 		os.Exit(detect.FailStatusCode)
 	}
 
@@ -50,14 +44,22 @@ func RunDetect(context detect.Detect) (int, error) {
 	md, err := GetMetadata(context.Logger)
 
 	if err == nil {
-		return context.Pass(buildplan.BuildPlan{
-			metadata.Dependency: buildplan.Dependency{
-				Metadata: buildplan.Metadata{
-					"build":  false,
-					"launch": true,
-					"sha": md.Sha,
-					"branch": md.Branch,
-					"remote": md.Remote,
+		return context.Pass(buildplan.Plan{
+			Requires: []buildplan.Required{
+				{
+					Name: metadata.Dependency,
+					Metadata: buildplan.Metadata{
+						"build":  false,
+						"launch": true,
+						"sha":    md.Sha,
+						"branch": md.Branch,
+						"remote": md.Remote,
+					},
+				},
+			},
+			Provides: []buildplan.Provided{
+				{
+					metadata.Dependency,
 				},
 			},
 		})

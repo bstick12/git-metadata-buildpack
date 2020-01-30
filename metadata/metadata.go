@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/buildpack/libbuildpack/buildpackplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
 )
@@ -23,21 +23,20 @@ type GitMetadata struct {
 }
 
 func (md GitMetadata) Identity() (string, string) {
-	return md.Sha, Dependency
+	return Dependency, ""
 }
 
 func Contribute(context build.Build) error {
 
-	dependency, wantLayer := context.BuildPlan[Dependency]
-	if !wantLayer {
+	dependency, wantDependency, err := context.Plans.GetShallowMerged(Dependency)
+	if err != nil || !wantDependency {
 		return errors.New(fmt.Sprintf("layer %s is not wanted", Dependency))
 	}
 
 	layer := context.Layers.Layer(Dependency)
 
-
 	md := GitMetadata{
-		Sha: dependency.Metadata["sha"].(string),
+		Sha:    dependency.Metadata["sha"].(string),
 		Branch: dependency.Metadata["branch"].(string),
 		Remote: dependency.Metadata["remote"].(string),
 	}
@@ -67,7 +66,7 @@ func Contribute(context build.Build) error {
 	return nil
 }
 
-func flags(plan buildplan.Dependency) []layers.Flag {
+func flags(plan buildpackplan.Plan) []layers.Flag {
 	var flags []layers.Flag
 	cache, _ := plan.Metadata["cache"].(bool)
 	if cache {

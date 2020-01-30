@@ -1,14 +1,14 @@
 package main_test
 
 import (
-	"github.com/bstick12/git-metadata-buildpack/metadata"
-	"github.com/bstick12/git-metadata-buildpack/utils"
 	"os"
 	"testing"
 
-	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/bstick12/git-metadata-buildpack/metadata"
+	"github.com/bstick12/git-metadata-buildpack/utils"
 
 	cmdBuild "github.com/bstick12/git-metadata-buildpack/cmd/build"
+	"github.com/buildpack/libbuildpack/buildpackplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
@@ -16,11 +16,11 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestUnitDetect(t *testing.T) {
-	spec.Run(t, "Build", testDetect, spec.Report(report.Terminal{}))
+func TestUnitBuild(t *testing.T) {
+	spec.Run(t, "Build", testBuild, spec.Report(report.Terminal{}))
 }
 
-func testDetect(t *testing.T, when spec.G, it spec.S) {
+func testBuild(t *testing.T, when spec.G, it spec.S) {
 
 	var factory *test.BuildFactory
 
@@ -35,17 +35,17 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			defer utils.ResetEnv(os.Environ())
 			os.Clearenv()
 
-			factory.Build.BuildPlan = buildplan.BuildPlan{
-				metadata.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{
-						"build":  false,
-						"launch": true,
-						"sha":    "7aa636e253c4115df34b1f2fab526739cbf27570",
-						"branch": "fork/master",
-						"remote": "git@github.com/example/example.git",
-					},
+			factory.AddPlan(buildpackplan.Plan{
+				Name:    metadata.Dependency,
+				Version: "",
+				Metadata: buildpackplan.Metadata{
+					"build":  false,
+					"launch": true,
+					"sha":    "7aa636e253c4115df34b1f2fab526739cbf27570",
+					"branch": "fork/master",
+					"remote": "git@github.com/example/example.git",
 				},
-			}
+			})
 			code, err := cmdBuild.RunBuild(factory.Build)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(code).To(Equal(build.SuccessStatusCode))
@@ -54,7 +54,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			md := metadata.GitMetadata{}
 			metadataLayer.ReadMetadata(&md)
 			Expect(md).To(Equal(metadata.GitMetadata{
-				Sha : "7aa636e253c4115df34b1f2fab526739cbf27570",
+				Sha:    "7aa636e253c4115df34b1f2fab526739cbf27570",
 				Branch: "fork/master",
 				Remote: "git@github.com/example/example.git",
 			}))
@@ -72,4 +72,3 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 	})
 
 }
-

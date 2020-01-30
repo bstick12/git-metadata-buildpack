@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/bstick12/git-metadata-buildpack/internal"
 	"os"
 
+	"github.com/bstick12/git-metadata-buildpack/internal"
+
 	"github.com/bstick12/git-metadata-buildpack/metadata"
-	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/pkg/errors"
 
+	"github.com/buildpack/libbuildpack/buildpackplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 )
 
@@ -35,9 +36,8 @@ func main() {
 
 }
 
-
 func RunBuild(context build.Build) (int, error) {
-	context.Logger.FirstLine(context.Logger.PrettyIdentity(context.Buildpack))
+	context.Logger.Title(context.Buildpack)
 
 	err := metadata.Contribute(context)
 	if err != nil {
@@ -45,5 +45,5 @@ func RunBuild(context build.Build) (int, error) {
 
 	}
 
-	return context.Success(buildplan.BuildPlan{})
+	return context.Success(buildpackplan.Plan{})
 }
