@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PACK_VERSION=latest
+BP_PACKAGED_PATH=${BP_PACKAGED_PATH:-""}
 usage() {
     echo "Usage:   install_tools.sh <version: optional>"
     echo "Example: install_tools.sh 0.0.9"
@@ -24,7 +25,7 @@ fi
 install_pack_master() {
     if [[ -f ".bin/pack" ]]; then return 0; fi
 
-    git clone https://github.com/buildpack/pack ./.bin/pack-repo
+    git clone https://github.com/buildpacks/pack ./.bin/pack-repo
     pushd .bin/pack-repo
         go build -o ../pack ./cmd/pack/main.go
     popd
@@ -48,11 +49,11 @@ install_pack() {
     # don't fail out if lpass is not found
     set -e
     set +u
-    (GIT_TOKEN=${GIT_TOKEN:-"$(lpass show Shared-CF\ Buildpacks/concourse-private.yml | grep buildpacks-github-token | cut -d ' ' -f 2)"}) || true
+    GIT_TOKEN=${GIT_TOKEN:-"$(lpass show Shared-CF\ Buildpacks/concourse-private.yml | grep buildpacks-github-token | cut -d ' ' -f 2)"} || true
     set +e
 
     CURL_DATA=""
-    if [[ ! -z "$GIT_TOKEN" ]]; then
+    if [[ -n "$GIT_TOKEN" ]]; then
         CURL_DATA="Authorization: token $GIT_TOKEN"
     fi
     set -u
@@ -61,31 +62,31 @@ install_pack() {
         echo "Installing pack $PACK_VERSION"
 
         PACK_ARTIFACT=pack-$PACK_VERSION-$OS.tar.gz
-        ARTIFACT_URL="https://github.com/buildpack/pack/releases/download/v$PACK_VERSION/$PACK_ARTIFACT"
+        ARTIFACT_URL="https://github.com/buildpacks/pack/releases/download/v$PACK_VERSION/$PACK_ARTIFACT"
         expand $ARTIFACT_URL
         return 0
     fi
 
     if [[ $OS == "macos" ]]; then
 
-        ARTIFACT_URL=$(curl $CURL_DATA -s https://api.github.com/repos/buildpack/pack/releases/latest |   jq --raw-output '.assets[1] | .browser_download_url')
+        ARTIFACT_URL=$(curl $CURL_DATA -s https://api.github.com/repos/buildpacks/pack/releases/latest |   jq --raw-output '.assets[1] | .browser_download_url')
     else
-        ARTIFACT_URL=$(curl $CURL_DATA -s https://api.github.com/repos/buildpack/pack/releases/latest |   jq --raw-output '.assets[0] | .browser_download_url')
+        ARTIFACT_URL=$(curl $CURL_DATA -s https://api.github.com/repos/buildpacks/pack/releases/latest |   jq --raw-output '.assets[0] | .browser_download_url')
     fi
 
-    expand $ARTIFACT_URL
+    expand "$ARTIFACT_URL"
 }
 
 install_packager () {
     if [ ! -f .bin/packager ]; then
         echo "installing packager in .bin directory"
-        go build -o .bin/packager github.com/cloudfoundry/libcfbuildpack/packager
+        go get github.com/cloudfoundry/libcfbuildpack/packager && go build -o .bin/packager github.com/cloudfoundry/libcfbuildpack/packager
     fi
 }
 
 expand() {
-    PACK_ARTIFACT=$(echo $1 | sed "s/.*\///")
-    PACK_VERSION=v$(echo $PACK_ARTIFACT | sed 's/pack-//' | sed 's/-.*//')
+    PACK_ARTIFACT=$(echo "$1" | sed "s/.*\///")
+    PACK_VERSION=v$(echo "$PACK_ARTIFACT" | sed 's/pack-//' | sed 's/-.*//')
 
     if [[ ! -f .bin/pack ]]; then
         echo "Installing Pack"
@@ -96,16 +97,17 @@ expand() {
         echo "Version $PACK_VERSION of pack is already installed"
         return 0
     fi
-    wget $ARTIFACT_URL
-    tar xzvf $PACK_ARTIFACT -C .bin
-    rm $PACK_ARTIFACT
+    wget "$ARTIFACT_URL"
+    tar xzvf "$PACK_ARTIFACT" -C .bin
+    rm "$PACK_ARTIFACT"
 }
 
 
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 
 mkdir -p .bin
-export PATH=$(pwd)/.bin:$PATH
+PATH="$(pwd)/.bin:$PATH"
+export PATH
 
 install_pack
 install_packager
