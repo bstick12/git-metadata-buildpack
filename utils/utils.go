@@ -14,4 +14,3 @@ func ResetEnv(origEnv []string) {
 		}
 	}
 }
-

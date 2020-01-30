@@ -5,27 +5,26 @@ import (
 	"os/exec"
 )
 
-
 type CmdFunctionParams struct {
-	Stdout io.Writer
-	StdErr io.Writer
-	Stdin io.Reader
+	Stdout  io.Writer
+	StdErr  io.Writer
+	Stdin   io.Reader
 	Command string
-	Args []string
-	Return error
-	Output []byte
+	Args    []string
+	Return  error
+	Output  []byte
 }
 
 type TestRunner struct {
-	Runner func () error
-	CombinedOutputter func () ([]byte, error)
+	Runner            func() error
+	CombinedOutputter func() ([]byte, error)
 }
 
-func(tr *TestRunner) Run() error {
+func (tr *TestRunner) Run() error {
 	return tr.Runner()
 }
 
-func(tr *TestRunner) CombinedOutput() ([]byte, error) {
+func (tr *TestRunner) CombinedOutput() ([]byte, error) {
 	return tr.CombinedOutputter()
 }
 
@@ -41,4 +40,3 @@ func CmdRunner(stdout, stderr io.Writer, stdin io.Reader, command string, args .
 	cmd.Stdin = stdin
 	return cmd
 }
-
